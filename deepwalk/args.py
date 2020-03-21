@@ -5,5 +5,5 @@ embed_size = 64
 max_nodes = 11000
 lr = 1e-4
 grad_norm = 5
-eps = 1e-50
+eps = 1e-20
 
