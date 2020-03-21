@@ -36,6 +36,7 @@ def deepwalk(tree, embedding, graph, optimT, optimE):
             vi_name = graph.idx_to_name_map[vi]
             random_walk = graph.random_walk(vi_name, args.walk_length)
             tree,embedding,optimT,optimE = skipgram(random_walk, graph, tree, embedding, optimT, optimE)
+            break
     return tree,embedding,optimT,optimE
 if __name__ == "__main__":
     g = Graph("../data/nodes.csv", "../data/edges.csv")
