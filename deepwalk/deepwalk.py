@@ -9,7 +9,9 @@ Tensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTenso
 import args
 import pickle
 def nll(prob, eps = args.eps):
-    return -1 * torch.log(prob + eps)
+    if(prob == 0):
+        prob = eps
+    return -1 * torch.log(prob)
 def skipgram(random_walk, graph, tree, embedding, optimT, optimE):
     for idx in range(len(random_walk)):
         for j in range(max(0, idx-args.window_length), min(len(random_walk), idx + args.window_length + 1)):
