@@ -3,6 +3,7 @@ import random
 class Graph:
     def __init__(self, node_file, edge_file):
         self.adj, self.idx_to_name_map, self.name_to_idx_map = self.read_file(node_file, edge_file)
+        self.num_nodes = len(self.idx_to_name_map)
     def get_degrees(self):
         ret = []
         for k,v in self.adj.items():
@@ -28,6 +29,8 @@ class Graph:
         return adj, idx_to_name, name_to_idx
     def random_walk(self, vertex_start, walk_length):
         if(walk_length == 0):
+            return []
+        if((len(self.adj[vertex_start])) == 0):
             return []
         next_idx = random.randint(0, len(self.adj[vertex_start])-1)
         next_node = self.adj[vertex_start][next_idx]

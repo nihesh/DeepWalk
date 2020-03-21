@@ -57,13 +57,12 @@ class SoftmaxTree(nn.Module):
         root = heappop(heap)
         self.root = root
         self.generate_codes(self.root, [])
-    def forward(self, input_node, input_embedding):
-        code = self.codes[input_node]
+    def forward(self, input_node_name, context_embedding):
+        code = self.codes[input_node_name]
         root = self.root
         prob = 1
-        print(code)
         for i in code:
-            dotp = torch.dot(input_embedding, root.tensor)
+            dotp = torch.dot(context_embedding, root.tensor)
             sigmoid = torch.sigmoid(dotp)
             prob *= sigmoid
             if(i == 0):

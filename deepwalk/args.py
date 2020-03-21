@@ -1,8 +1,8 @@
 window_length = 10
-walks_per_vertex = 100
+walks_per_vertex = 80
 walk_length = 40
-embedding_size = 32
-
-
+embed_size = 64
+max_nodes = 11000
+lr = 1e-4
 
 
