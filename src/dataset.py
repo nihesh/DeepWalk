@@ -10,7 +10,7 @@ import src.utils as utils
 class Blog(Dataset):
 
 	def __init__(self, root, subset_size):
-
+			
 		self.root = root
 		self.subset_size = subset_size
 
