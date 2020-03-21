@@ -3,6 +3,7 @@ import torch.nn as nn
 from heapq import heapify, heappush, heappop 
 import copy
 import sys
+from args import eps
 class Node(nn.Module):
     def __init__(self):
         super(Node, self).__init__()
@@ -64,7 +65,8 @@ class SoftmaxTree(nn.Module):
         for i in code:
             dotp = torch.dot(context_embedding, root.tensor)
             sigmoid = torch.sigmoid(dotp)
-            prob *= sigmoid
+            #print(sigmoid)
+            prob *= (sigmoid)
             if(i == 0):
                 root = root.left
             elif(i == 1):

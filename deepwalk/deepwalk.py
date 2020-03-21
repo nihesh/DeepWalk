@@ -7,8 +7,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 Tensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
 import args
 import pickle
-def nll(prob, eps = 1e-20):
-    return -1 * torch.log(prob)
+def nll(prob, eps = args.eps):
+    return -1 * torch.log(prob + eps)
 def skipgram(random_walk, graph, tree, embedding, optimT, optimE):
     for idx in range(len(random_walk)):
         for j in range(max(0, idx-args.window_length), min(len(random_walk), idx + args.window_length + 1)):
@@ -19,8 +19,10 @@ def skipgram(random_walk, graph, tree, embedding, optimT, optimE):
             optimE.zero_grad()
             optimT.zero_grad()
             loss = nll(prob)
-            #print(loss)
+            print(prob, loss)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(embedding.parameters(), args.grad_norm)
+            torch.nn.utils.clip_grad_norm_(tree.parameters(), args.grad_norm)
             optimE.step()
             optimT.step()
     return tree,embedding,optimT,optimE
