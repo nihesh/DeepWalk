@@ -22,7 +22,7 @@ def skipgram(random_walk, graph, tree, embedding, optimT, optimE):
             optimE.zero_grad()
             optimT.zero_grad()
             loss = nll(prob)
-            print(prob, loss)
+            # print(prob, loss)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(embedding.parameters(), args.grad_norm)
             torch.nn.utils.clip_grad_norm_(tree.parameters(), args.grad_norm)

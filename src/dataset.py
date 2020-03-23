@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 import os
 import numpy as np
 import src.utils as utils
+import torch
 
 class Blog(Dataset):
 
@@ -41,9 +42,11 @@ class Blog(Dataset):
 		node is the idx starting from 0 to num_nodes - 1. The graph structure is indexed from 1 onwards
 		"""
 
-		print(node, self.num_nodes)
+		walk = utils.random_walk(node + 1, self.graph, self.subset_size)
+		walk.reverse()
+		walk = torch.tensor(walk).long()
 
-		return utils.random_walk(node + 1, self.graph, self.subset_size)
+		return walk
 
 if(__name__ == "__main__"):
 

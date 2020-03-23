@@ -3,6 +3,15 @@
 # File 	 : utils.py
 
 import random
+import torch
+
+def nan_check(vector):
+
+	"""
+	Asserts none of the elements in vector is nan
+	"""
+
+	assert(not torch.isnan(vector).any() and not (vector == float("inf")).any())
 
 def random_walk(node, graph, size):
 
