@@ -1,9 +1,8 @@
-window_length = 10
-walks_per_vertex = 80
-walk_length = 40
-embed_size = 64
-max_nodes = 11000
-lr = 1e-4
+window_length = 2
+walks_per_vertex = 100
+walk_length = 10
+embed_size = 2
+max_nodes = 34
+lr = 0.025
 grad_norm = 5
-eps = 1e-20
-
+hdf5file = "walk_pairs.hdf5"
