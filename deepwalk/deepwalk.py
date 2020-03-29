@@ -1,60 +1,92 @@
-from graph import Graph
+from graph import Graph,WalkPairData
 from parameters import SoftmaxTree, EmbeddingMatrix
 from tqdm import tqdm
 import torch
+import h5py
+from torch.utils.data import DataLoader
+import numpy as np
+from torch.autograd import Variable
 import random
 import torch.optim as optim
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 Tensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
+Tensorf = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+
+
 import args
 import pickle
-def nll(prob, eps = args.eps):
-    if(prob < eps):
-        prob += eps
+import sys
+import matplotlib.pyplot as plt
+grad_counter = 0
+import os
+def nll(prob):
     return -1 * torch.log(prob)
-def skipgram(random_walk, graph, tree, embedding, optimT, optimE):
+            
+def write_walk(random_walk, tree, f, data_counter):
     for idx in range(len(random_walk)):
         for j in range(max(0, idx-args.window_length), min(len(random_walk), idx + args.window_length + 1)):
-            input_node_name = random_walk[j]
-            index = (graph.name_to_idx_map[random_walk[idx]])
-            context_embedding = embedding(Tensor([index])).squeeze(0)
-            prob = tree(input_node_name, context_embedding)
-            optimE.zero_grad()
-            optimT.zero_grad()
-            loss = nll(prob)
-            # print(prob, loss)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(embedding.parameters(), args.grad_norm)
-            torch.nn.utils.clip_grad_norm_(tree.parameters(), args.grad_norm)
-            optimE.step()
-            optimT.step()
-    return tree,embedding,optimT,optimE
-            
-def deepwalk(tree, embedding, graph, optimT, optimE):
+            input_node_idx = random_walk[j]
+            context_idx = random_walk[idx]
+            index_path_tree, binary_multipliers = tree.get_path(input_node_idx)
+            f[str(data_counter)] = np.array([context_idx] + index_path_tree + binary_multipliers + [input_node_idx])
+            data_counter += 1 
+    return data_counter
+def deepwalk(tree,graph):
+    data_counter = 0
+    f = h5py.File(args.hdf5file, "w")
     nodes_index = [i for i in range(graph.num_nodes)]
-    for gamma in tqdm(range(1, args.walks_per_vertex+1)):
+    for gamma in (range(1, args.walks_per_vertex+1)):
         random.shuffle(nodes_index)
-        for counter,vi in tqdm(enumerate(nodes_index)):
+        for counter,vi in (enumerate(nodes_index)):
             print("iter {} vertex {}".format(gamma, counter))
-            vi_name = graph.idx_to_name_map[vi]
-            random_walk = graph.random_walk(vi_name, args.walk_length)
-            tree,embedding,optimT,optimE = skipgram(random_walk, graph, tree, embedding, optimT, optimE)
-    return tree,embedding,optimT,optimE
+            random_walk = graph.random_walk(counter, args.walk_length)
+            data_counter = write_walk(random_walk, tree, f, data_counter)
+    f.close()
 if __name__ == "__main__":
-    g = Graph("../data/nodes.csv", "../data/edges.csv")
+    g = Graph("../data/karate_nodes.txt", "../data/karate_edges.txt")
     degreelist = g.get_degrees()
     degreelist = sorted(degreelist, key = lambda x : x[1])
     tree = SoftmaxTree(embed_size = args.embed_size)
     tree.create_huffman(degreelist)
     tree = tree.to(device)
+    
     embeddings = EmbeddingMatrix(max_nodes = args.max_nodes, embed_size = args.embed_size).to(device)
+    embeddings2 = np.copy(list(embeddings.parameters())[0].data.cpu().numpy())
     optimE = optim.Adam(embeddings.parameters(), lr = args.lr)
     optimT = optim.Adam(tree.parameters(), lr = args.lr)
-    tree,embeddings,optimT,optimE = deepwalk(tree, embeddings, g, optimT, optimE)
-    embeddings = list(embeddings.parameters())[0].data.cpu().numpy()
-    
+    deepwalk(tree,g)
+    #print(tree.codes)
+    #sys.exit(-1)
+    dataset = WalkPairData(args.hdf5file)
+    train_loader = DataLoader(dataset, batch_size = 1, num_workers = 1, shuffle = True)
+    totalsize = len(train_loader)
+    for e in range(1):
+        for idx,batch in (enumerate(train_loader)):
+            batch = Variable(batch.type(Tensor), requires_grad = False)
+            context_idx = batch[:,0]
+            length = batch.shape[1] - 1
+            length //= 2
+            tree_path_idx = batch[:,1:1+length].squeeze(0)
+            binary_multipliers = Variable(batch[:,1+length:1+2*length].squeeze(0).type(Tensorf), requires_grad = False)
+            print(tree_path_idx.shape, binary_multipliers.shape)
+            input_node = batch[:,-1]
+            optimE.zero_grad()
+            optimT.zero_grad()
+            context_vector = embeddings(context_idx)
+            prob = tree(context_vector, tree_path_idx,binary_multipliers)
+            loss = nll(prob)
+            #print(tree_path_idx)
+            print(input_node, context_idx)
+            print(binary_multipliers)
+            print(idx, totalsize,loss,prob)
+            loss.backward()
+            #for name,p in tree.named_parameters():
+            #   print(p.grad)
+            optimT.step()
+            optimE.step()
+    embeddings = np.copy(list(embeddings.parameters())[0].data.cpu().numpy())
     f = open("embeddings.pkl", "wb")
-    pickle.dump(embeddings, f)
+    pickle.dump((embeddings,embeddings2), f)
     f.close()
 
 
