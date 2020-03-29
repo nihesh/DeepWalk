@@ -3,6 +3,8 @@ import torch.nn as nn
 from heapq import heapify, heappush, heappop 
 import copy
 import sys
+import numpy as np
+import args
 class Node:
     def __init__(self):
         self.left = None
@@ -66,29 +68,31 @@ class SoftmaxTree(nn.Module):
         self.generate_codes(self.root, [])
         self.inorder_traversal(self.root)
         self.matrix = nn.Embedding(self.size, self.embed_size)
-    
+        self.matrix.weight.data.copy_(torch.from_numpy(np.random.uniform(low = args.low_weight/self.embed_size, high = args.low_weight/self.embed_size, size = (self.size, self.embed_size))))
     def get_path(self, input_node_idx):
         code = self.codes[input_node_idx]
         root = self.root
         ret = []
+        mul = []
         for i in code:
             ret.append(root.index)
             if(i == 0):
                 root = root.left
+                mul.append(1)
             else:
                 root = root.right
-        return ret
-    def forward(self, context_embedding, input_path_idxs):
+                mul.append(-1)
+        return ret,mul
+    def forward(self, context_embedding, input_path_idxs, binary_multiplier):
         input_vectors = self.matrix(input_path_idxs)
         context_embedding = torch.transpose(context_embedding, 1, 0)
         #print(input_vectors, context_embedding)
         probs = torch.mm(input_vectors, context_embedding)
-        #print(probs)
-        probs /= torch.norm(context_embedding)
         probs = probs.squeeze(1)
-        probs /= torch.norm(input_vectors, dim = 1)    
-        #print(probs)
-        probs = (1 + probs)/2
+        binary_multiplier = binary_multiplier.squeeze(0)
+        probs = probs * binary_multiplier
+        #print(probs.squeeze(0))
+        probs = torch.sigmoid(probs)
         prob = torch.prod(probs)
         #print(prob)
         return prob
@@ -98,5 +102,7 @@ class EmbeddingMatrix(nn.Module):
         self.max_nodes = max_nodes
         self.embed_size = embed_size
         self.matrix = nn.Embedding(self.max_nodes, self.embed_size)
+        self.matrix.weight.data.copy_(torch.from_numpy(np.random.uniform(low = args.low_weight/self.embed_size, high = args.high_weight/self.embed_size, size = (self.max_nodes, self.embed_size))))
+    
     def forward(self, input):
         return self.matrix(input)

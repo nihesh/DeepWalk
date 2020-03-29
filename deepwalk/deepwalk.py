@@ -24,9 +24,8 @@ def write_walk(random_walk, tree, f, data_counter):
         for j in range(max(0, idx-args.window_length), min(len(random_walk), idx + args.window_length + 1)):
             input_node_idx = random_walk[j]
             context_idx = random_walk[idx]
-            index_path_tree = tree.get_path(input_node_idx)
-            x = np.array([context_idx] + index_path_tree)
-            f[str(data_counter)] = x
+            index_path_tree, binary_multipliers = tree.get_path(input_node_idx)
+            f[str(data_counter)] = np.array([context_idx] + index_path_tree + binary_multipliers)
             data_counter += 1 
     return data_counter
 def deepwalk(tree,graph):
@@ -53,18 +52,22 @@ if __name__ == "__main__":
     optimE = optim.Adam(embeddings.parameters(), lr = args.lr)
     optimT = optim.Adam(tree.parameters(), lr = args.lr)
     deepwalk(tree,g)
+    #print(tree.codes)
     dataset = WalkPairData(args.hdf5file)
     train_loader = DataLoader(dataset, batch_size = 1, num_workers = 1, shuffle = True)
     totalsize = len(train_loader)
-    for e in range(1):
+    for e in range(3):
         for idx,batch in (enumerate(train_loader)):
             batch = Variable(batch.type(Tensor), requires_grad = False)
             context_idx = batch[:,0]
-            tree_path_idx = batch[:,1:].squeeze(0)
+            length = batch.shape[1] - 1
+            length //= 2
+            tree_path_idx = batch[:,1:1+length].squeeze(0)
+            binary_multipliers = batch[:,1+length:].squeeze(0)
             optimE.zero_grad()
             optimT.zero_grad()
             context_vector = embeddings(context_idx)
-            prob = tree(context_vector, tree_path_idx)
+            prob = tree(context_vector, tree_path_idx,binary_multipliers)
             loss = nll(prob)
             print(idx, totalsize,loss,prob)
             loss.backward()
