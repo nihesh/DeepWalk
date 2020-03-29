@@ -10,6 +10,9 @@ import random
 import torch.optim as optim
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 Tensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
+Tensorf = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+
+
 import args
 import pickle
 import sys
@@ -64,7 +67,7 @@ if __name__ == "__main__":
             length = batch.shape[1] - 1
             length //= 2
             tree_path_idx = batch[:,1:1+length].squeeze(0)
-            binary_multipliers = batch[:,1+length:1+2*length].squeeze(0)
+            binary_multipliers = Variable(batch[:,1+length:1+2*length].squeeze(0).type(Tensorf), requires_grad = False)
             print(tree_path_idx.shape, binary_multipliers.shape)
             input_node = batch[:,-1]
             optimE.zero_grad()
