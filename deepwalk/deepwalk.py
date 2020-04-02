@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 grad_counter = 0
 import os
 def nll(prob):
-    return torch.sum(-1 * torch.log(prob))
+    return torch.mean(-1 * torch.log(prob))
             
 def write_walk(random_walk, tree, f, data_counter):
     for idx in range(len(random_walk)):
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     dataset = WalkPairData(args.hdf5file)
     train_loader = DataLoader(dataset, batch_size = args.batch_size, num_workers = 1, shuffle = True)
     totalsize = len(train_loader)
-    for e in range(1):
+    for e in range(3):
         avg_loss = 0
         count = 0
         for idx,batch in (enumerate(train_loader)):
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             context_vector = embeddings(context_idx)
             prob = tree(context_vector, tree_path_idx,binary_multipliers)
             loss = nll(prob)
-            print(e, idx, totalsize,loss,prob)
+            #print(e, idx, totalsize,loss,prob)
             loss.backward()
             avg_loss += loss.item()
             count += 1
