@@ -8,7 +8,8 @@ WALK_LENGTH = 40
 EPOCHS = 1000
 BATCH_SIZE = 40
 EMBED_SIZE = 64
-LEARNING_RATE = 1e-3
+SUBSAMPLE_SIZE = 100
+LEARNING_RATE = 1e-2
 
 import src.dataset as dataset
 import torch
@@ -19,6 +20,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import pickle
 import os
+import src.utils as utils
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -41,7 +43,9 @@ if(__name__ == "__main__"):
 
 			walk = walk.to(device)
 			batch_size = walk.shape[0]
-			error = -loss.JointCooccurrenceLikelihood(walk, embedding)
+
+			subsample = utils.sample(embedding, SUBSAMPLE_SIZE)
+			error = -loss.JointCooccurrenceLikelihood(walk, embedding, subsample)
 
 			optimiser.zero_grad()
 			error.backward()

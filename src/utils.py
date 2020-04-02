@@ -32,6 +32,14 @@ def random_walk(node, graph, size):
 
 	return result
 
+def sample(embedding, size):
+
+	"""
+	Returns a subsample of embeddings - not with replacement, but uniform
+	"""
+
+	idx = torch.randint(0, embedding.shape[0], (size, ))
+	return embedding[idx]
 
 if(__name__ == "__main__"):
 
