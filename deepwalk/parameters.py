@@ -119,12 +119,12 @@ class SoftmaxTree(nn.Module):
         prob = torch.prod(probs, dim = 1)
         return prob
 class EmbeddingMatrix(nn.Module):
-    def __init__(self, max_nodes, embed_size):
+    def __init__(self, num_nodes, embed_size):
         super(EmbeddingMatrix, self).__init__()
-        self.max_nodes = max_nodes
+        self.num_nodes = num_nodes
         self.embed_size = embed_size
-        self.matrix = nn.Embedding(self.max_nodes, self.embed_size)
-        self.matrix.weight.data.copy_(torch.from_numpy(np.random.uniform(low = args.low_weight/self.embed_size, high = args.high_weight/self.embed_size, size = (self.max_nodes, self.embed_size))))
+        self.matrix = nn.Embedding(self.num_nodes, self.embed_size)
+        self.matrix.weight.data.copy_(torch.from_numpy(np.random.uniform(low = args.low_weight/self.embed_size, high = args.high_weight/self.embed_size, size = (self.num_nodes, self.embed_size))))
     
     def forward(self, input):
         return self.matrix(input)

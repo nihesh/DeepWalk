@@ -42,11 +42,10 @@ def deepwalk(tree,graph):
         for counter,vi in (enumerate(nodes_index)):
             print("iter {} vertex {}".format(gamma, counter))
             random_walk = graph.random_walk(counter, args.walk_length)
-            #print(random_walk)
             data_counter = write_walk(random_walk, tree, f, data_counter)
     f.close()
 if __name__ == "__main__":
-    g = Graph("../data/karate_nodes.txt", "../data/karate_edges.txt")
+    g = Graph("../data/nodes.csv", "../data/edges.csv", subset_size=args.subset_size)
     tree = SoftmaxTree(embed_size = args.embed_size)
     if(args.tree_constructor == "huffman"):
         degreelist = g.get_degrees()
@@ -56,15 +55,18 @@ if __name__ == "__main__":
         vertices = g.get_vertices()
         tree.create_complete_tree(vertices)
     tree = tree.to(device)
-    embeddings = EmbeddingMatrix(max_nodes = args.max_nodes, embed_size = args.embed_size).to(device)
+    embeddings = EmbeddingMatrix(num_nodes = g.num_nodes, embed_size = args.embed_size).to(device)
     embeddings2 = np.copy(list(embeddings.parameters())[0].data.cpu().numpy())
     optimE = optim.Adam(list(embeddings.parameters()) + list(tree.parameters()), lr = args.lr)
     if(not args.use_old_copy):
+        g.save_graph("./graph.pkl")
         deepwalk(tree,g)
+    print(g.num_nodes)
+    
     dataset = WalkPairData(args.hdf5file)
     train_loader = DataLoader(dataset, batch_size = args.batch_size, num_workers = 1, shuffle = True)
     totalsize = len(train_loader)
-    for e in range(3):
+    for e in range(1):
         avg_loss = 0
         count = 0
         for idx,batch in (enumerate(train_loader)):
@@ -78,7 +80,7 @@ if __name__ == "__main__":
             context_vector = embeddings(context_idx)
             prob = tree(context_vector, tree_path_idx,binary_multipliers)
             loss = nll(prob)
-            #print(e, idx, totalsize,loss,prob)
+            print(e, idx, totalsize,loss,prob)
             loss.backward()
             avg_loss += loss.item()
             count += 1

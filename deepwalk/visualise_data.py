@@ -23,7 +23,18 @@ def transform(mat, n_comp = 2):
     mat = pca.fit_transform(mat)
     print(sum(pca.explained_variance_ratio_))
     return mat
+
+def read_graph(pkl_file):
+    f = open(pkl_file, "rb")
+    g = pickle.load(f)
+    print(g[0])
+    print(g[1])
+    f.close()
+    print(len(g[1]))
 ##mat_old = transform(mat_old)
 #mat_new = transform(mat_new)
-draw(mat_old, "init_embeds.pdf")
-draw(mat_new, "final_embeds.pdf")
+#draw(mat_old, "init_embeds.pdf")
+#draw(mat_new, "final_embeds.pdf")
+print(mat_new.shape)
+read_graph("./graph.pkl")
+    
