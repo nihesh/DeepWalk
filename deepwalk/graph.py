@@ -12,6 +12,9 @@ class Graph:
         for k,v in self.adj.items():
             ret.append((k,len(v)))
         return ret
+    def get_vertices(self):
+        return list(self.adj.keys())
+        
     def read_file(self, node_file, edge_file):
         """
         args:

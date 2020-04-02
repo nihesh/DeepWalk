@@ -5,6 +5,7 @@ import copy
 import sys
 import numpy as np
 import args
+import math
 class Node:
     def __init__(self):
         self.left = None
@@ -39,6 +40,8 @@ class SoftmaxTree(nn.Module):
             temp_list.pop()
         return 
     def inorder_traversal(self, root):
+        if(root is None):
+            return
         if(root.right is None and root.left is None):
             return
         self.inorder_traversal(root.left)
@@ -47,6 +50,7 @@ class SoftmaxTree(nn.Module):
         self.inorder_traversal(root.right)
     def create_huffman(self, deg_list):
         heap = []
+        self.size = 0
         for i in deg_list:
             idx = Node()
             idx.value = i[0]
@@ -68,7 +72,29 @@ class SoftmaxTree(nn.Module):
         self.generate_codes(self.root, [])
         self.inorder_traversal(self.root)
         self.matrix = nn.Embedding(self.size, self.embed_size)
-        self.matrix.weight.data.copy_(torch.from_numpy(np.random.uniform(low = args.low_weight/self.embed_size, high = args.low_weight/self.embed_size, size = (self.size, self.embed_size))))
+        self.matrix.weight.data.copy_(torch.from_numpy(np.random.normal(loc = 0.25, scale = 0.01, size = (self.size, self.embed_size))))
+    def create_complete_tree(self, vertex_list):
+        """
+        creates a complete binary tree
+        args: vertex_list
+        """
+        self.size = 0
+        num_vertices = len(vertex_list)
+        num_vertices = 2**(math.ceil(math.log(num_vertices, 2)))
+        list_vertices = [None for i in range(2*num_vertices)]
+        for i in range(num_vertices, num_vertices + len(vertex_list)):
+            list_vertices[i] = Node()
+            list_vertices[i].value = vertex_list[i - num_vertices]
+        for i in range(num_vertices - 1, 0, -1):
+            list_vertices[i] = Node()
+            list_vertices[i].left = list_vertices[2*i]
+            list_vertices[i].right = list_vertices[2*i+1]
+        self.root = list_vertices[1]
+        self.generate_codes(self.root, [])
+        self.inorder_traversal(self.root)
+        self.matrix = nn.Embedding(self.size, self.embed_size)
+        self.matrix.weight.data.copy_(torch.from_numpy(np.random.normal(loc = 0.25, scale = 0.15, size = (self.size, self.embed_size))))  
+    
     def get_path(self, input_node_idx):
         code = self.codes[input_node_idx]
         root = self.root
@@ -85,16 +111,12 @@ class SoftmaxTree(nn.Module):
         return ret,mul
     def forward(self, context_embedding, input_path_idxs, binary_multiplier):
         input_vectors = self.matrix(input_path_idxs)
-        context_embedding = torch.transpose(context_embedding, 1, 0)
-        #print(input_vectors, context_embedding)
-        probs = torch.mm(input_vectors, context_embedding)
-        probs = probs.squeeze(1)
-        binary_multiplier = binary_multiplier.squeeze(0)
+        context_embedding = context_embedding.unsqueeze(-1)
+        probs = torch.matmul(input_vectors, context_embedding)
+        probs = probs.squeeze(-1)
         probs = probs * binary_multiplier
-        #print(probs.squeeze(0))
         probs = torch.sigmoid(probs)
-        prob = torch.prod(probs)
-        #print(prob)
+        prob = torch.prod(probs, dim = 1)
         return prob
 class EmbeddingMatrix(nn.Module):
     def __init__(self, max_nodes, embed_size):
