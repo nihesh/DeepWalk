@@ -4,8 +4,41 @@
 
 import torch
 import src.utils as utils
+from src.constants import EPS
 
-def JointCooccurrenceLikelihood(random_walk, embedding, subsample):
+def NormalisationFactor(fixed_pts, subsample):
+
+	"""
+	Returns the normalisation denominator for probability computation
+	"""
+
+	pairwise_dot = (fixed_pts.unsqueeze(2) * subsample.unsqueeze(1)).sum(dim = 3)
+	pairwise_dot = pairwise_dot / torch.norm(fixed_pts, 2, dim = 2).unsqueeze(2)
+	pairwise_dot = pairwise_dot / torch.norm(subsample, 2, dim = 2).unsqueeze(1)
+	pairwise_dot = (pairwise_dot + 1) / 2
+	normalisation_factor = pairwise_dot.sum(dim = 2)
+
+	return normalisation_factor
+
+def ShiftAndMult(fixed_pts, shift, normalisation_factor):
+
+	num_samples = fixed_pts.shape[1]
+
+	shifted = fixed_pts[:, max(shift, 0): min(num_samples - 1, num_samples + shift - 1)]
+	base = fixed_pts[:, max(-shift, 0): min(num_samples - 1, num_samples - shift - 1)]
+
+	similarity = shifted * base
+	similarity = similarity.sum(dim = 2)
+	similarity = similarity / torch.norm(shifted, 2, dim = 2)
+	similarity = similarity / torch.norm(base, 2, dim = 2)
+	similarity = (similarity + 1) / 2
+
+	trimmed_norm = normalisation_factor[:, max(-shift, 0): min(num_samples - 1, num_samples - shift - 1)]
+	similarity = similarity / (similarity + trimmed_norm)
+
+	return similarity
+
+def JointCooccurrenceLikelihood(random_walk, embedding, subsample, window_size, device):
 
 	"""
 	Computes the joint cooccurence loss averaged over the batches and returns it
@@ -19,33 +52,28 @@ def JointCooccurrenceLikelihood(random_walk, embedding, subsample):
 	selected_embeddings = embedding[random_walk]
 	n = selected_embeddings.shape[1]
 
-	first_few = selected_embeddings[:, : n - 1, :]
-	last_few = selected_embeddings[:, 1:, :]
+	fixed_pts = selected_embeddings
 
-	pairwise_dot = (first_few.unsqueeze(2) * subsample.unsqueeze(1)).sum(dim = 3)
-	pairwise_dot = pairwise_dot / torch.norm(first_few, 2, dim = 2).unsqueeze(2)
-	pairwise_dot = pairwise_dot / torch.norm(subsample, 2, dim = 2).unsqueeze(1)
-	pairwise_dot = (pairwise_dot + 1) / 2
-	normalisation_factor = pairwise_dot.sum(dim = 2)
+	normalisation_factor = NormalisationFactor(fixed_pts, subsample)
 
+	loss = 0
 
-	similarity = first_few * last_few
-	similarity = similarity / torch.norm(first_few, 2, dim = 2).unsqueeze(2)
-	similarity = similarity / torch.norm(last_few, 2, dim = 2).unsqueeze(2)
-	similarity = similarity.sum(dim = 2)
-	similarity = (similarity + 1) / 2
+	for i in range(-(window_size - 1), window_size + 1):
 
-	# Normalise similarity using normalisation factor
-	similarity = similarity / (similarity + normalisation_factor)
+		if(i == 0):
+			continue
 
-	# Evade multiplication by adding log probabilities
-	joint = torch.log(similarity)
-	joint = joint.sum(dim = 1)
+		similarity = ShiftAndMult(fixed_pts, i, normalisation_factor)
 
-	joint = joint.sum(dim = 0)
-	utils.nan_check(joint)
+		joint = torch.log(torch.max(similarity, torch.tensor([EPS]).float().to(device))).float().to(device)
+		joint = joint.sum(dim = 1)
+		joint = joint.sum(dim = 0)
 
-	return joint / batch_size
+		loss = loss + joint / batch_size
+
+	utils.nan_check(loss)
+
+	return loss
 
 if(__name__ == "__main__"):
 

@@ -39,6 +39,7 @@ def sample(embedding, size):
 	"""
 
 	idx = torch.randint(0, embedding.shape[0], (size, ))
+
 	return embedding[idx]
 
 if(__name__ == "__main__"):
