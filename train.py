@@ -5,13 +5,14 @@
 ROOT = "./data/"
 DUMP = "./dump/"
 WALK_LENGTH = 10
-EPOCHS = 3000
+EPOCHS = 1000
 BATCH_SIZE = 20
 EMBED_SIZE = 2
-SUBSAMPLE_SIZE = 0
-LEARNING_RATE = 1e-3
+SUBSAMPLE_SIZE = 0			# 0 corresponds to the size of the dataset
+LEARNING_RATE = 1e-2
 WINDOW_SIZE = 3
 SEED = 0
+TEMPERATURE = 2
 
 import src.dataset as dataset
 import torch
@@ -62,7 +63,7 @@ if(__name__ == "__main__"):
 			batch_size = walk.shape[0]
 
 			subsample = utils.sample(embedding, SUBSAMPLE_SIZE)
-			error = -loss.JointCooccurrenceLikelihood(walk, embedding, subsample, WINDOW_SIZE, device)
+			error = -loss.JointCooccurrenceLikelihood(walk, embedding, subsample, WINDOW_SIZE, TEMPERATURE, device)
 
 			optimiser.zero_grad()
 			error.backward()

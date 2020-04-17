@@ -6,7 +6,7 @@ import torch
 import src.utils as utils
 from src.constants import EPS
 
-def NormalisationFactor(fixed_pts, subsample):
+def NormalisationFactor(fixed_pts, subsample, temperature):
 
 	"""
 	Returns the normalisation denominator for probability computation
@@ -15,12 +15,12 @@ def NormalisationFactor(fixed_pts, subsample):
 	pairwise_dot = (fixed_pts.unsqueeze(2) * subsample.unsqueeze(1)).sum(dim = 3)
 	pairwise_dot = pairwise_dot / torch.norm(fixed_pts, 2, dim = 2).unsqueeze(2)
 	pairwise_dot = pairwise_dot / torch.norm(subsample, 2, dim = 2).unsqueeze(1)
-	pairwise_dot = (pairwise_dot + 1) / 2
+	pairwise_dot = torch.exp(temperature * pairwise_dot)
 	normalisation_factor = pairwise_dot.sum(dim = 2)
 
 	return normalisation_factor
 
-def ShiftAndMult(fixed_pts, shift, normalisation_factor):
+def ShiftAndMult(fixed_pts, shift, normalisation_factor, temperature):
 
 	num_samples = fixed_pts.shape[1]
 
@@ -31,14 +31,14 @@ def ShiftAndMult(fixed_pts, shift, normalisation_factor):
 	similarity = similarity.sum(dim = 2)
 	similarity = similarity / torch.norm(shifted, 2, dim = 2)
 	similarity = similarity / torch.norm(base, 2, dim = 2)
-	similarity = (similarity + 1) / 2
+	similarity = torch.exp(temperature * similarity)
 
 	trimmed_norm = normalisation_factor[:, max(-shift, 0): min(num_samples - 1, num_samples - shift - 1)]
 	similarity = similarity / (similarity + trimmed_norm)
 
 	return similarity
 
-def JointCooccurrenceLikelihood(random_walk, embedding, subsample, window_size, device):
+def JointCooccurrenceLikelihood(random_walk, embedding, subsample, window_size, temperature, device):
 
 	"""
 	Computes the joint cooccurence loss averaged over the batches and returns it
@@ -54,7 +54,7 @@ def JointCooccurrenceLikelihood(random_walk, embedding, subsample, window_size, 
 
 	fixed_pts = selected_embeddings
 
-	normalisation_factor = NormalisationFactor(fixed_pts, subsample)
+	normalisation_factor = NormalisationFactor(fixed_pts, subsample, temperature)
 
 	loss = 0
 
@@ -63,7 +63,7 @@ def JointCooccurrenceLikelihood(random_walk, embedding, subsample, window_size, 
 		if(i == 0):
 			continue
 
-		similarity = ShiftAndMult(fixed_pts, i, normalisation_factor)
+		similarity = ShiftAndMult(fixed_pts, i, normalisation_factor, temperature)
 
 		joint = torch.log(torch.max(similarity, torch.tensor([EPS]).float().to(device))).float().to(device)
 		joint = joint.sum(dim = 1)

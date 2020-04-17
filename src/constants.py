@@ -1,7 +1,7 @@
 # Author : Nihesh Anderson
 # Date   : 16 April, 2020
 
-EPS = 1e-9
+EPS = 1e-14
 
 if(__name__ == "__main__"):
 
