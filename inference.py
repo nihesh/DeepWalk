@@ -4,12 +4,27 @@
 
 ROOT = "./dump/embedding.pkl"
 LABELS = "./data/group-edges.csv"
-SPLIT = 0.2							# Train : Test ratio
+SPLIT = 0.8							# Train : Test ratio
 
 import pickle
 import numpy as np
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.multiclass import OneVsRestClassifier
+from matplotlib import pyplot as plt
+from sklearn.manifold import TSNE
+from sklearn.tree import DecisionTreeClassifier
+import random
+import torch
+
+def ResetWorkspace():
+
+	random.seed(0)
+	np.random.seed(0)
+	torch.manual_seed(0)
+	torch.backends.cudnn.deterministic = True
+	torch.backends.cudnn.benchmark = False
 
 def ReadData(root):
 
@@ -17,26 +32,35 @@ def ReadData(root):
 	data = pickle.load(file)
 	file.close()
 
-	return data
+ 	return data
 
 def ReadLabels(root):
+
+	"""
+	Returns all the labels for associated nodes 
+	"""
 
 	file = open(root, "r")
 	data = []
 
+	num_labels = -1
 	num_samples = 0
 	for line in file:
 		line = line.split(",")
 		num_samples = max(num_samples, int(line[0]))
+		num_labels = max(num_labels, int(line[1]))	
+
 		data.append(line)
 
-	labels = [-1 for i in range(num_samples)]
+	labels = [np.zeros(num_labels) for i in range(num_samples)]
 	for line in data:
-		labels[int(line[0]) - 1] = int(line[1]) - 1
+		labels[int(line[0]) - 1][int(line[1]) - 1] = 1
 
 	return np.asarray(labels)
 
 if(__name__ == "__main__"):
+
+	ResetWorkspace()
 
 	data = ReadData(ROOT)
 	labels = ReadLabels(LABELS)
@@ -48,20 +72,29 @@ if(__name__ == "__main__"):
 	train = idx[:int(num_samples * SPLIT)]
 	test = idx[int(num_samples * SPLIT):]
 
-	train_label = labels[train]
-	test_label = labels[test]
+	train_label = labels[train, :]
+	test_label = labels[test, :]
 
 	train_data = data[train]
 	test_data = data[test]
 
-	model = SVC(C = 1.0, kernel = "rbf")
+	# model = OneVsRestClassifier(LogisticRegression(solver = "liblinear"))
+	# model = OneVsRestClassifier(SVC(C = 5, kernel = "linear"))
+	model = OneVsRestClassifier(DecisionTreeClassifier(min_impurity_decrease = 3e-4, random_state = 0))
 	model.fit(train_data, train_label)
 
 	train_prediction = model.predict(train_data)
 	test_prediction = model.predict(test_data)
-	print("Train accuracy: {train_acc}".format(
-			train_acc = accuracy_score(train_label, train_prediction)
+
+	print("Train micro f1: {train_f1}".format(
+			train_f1 = f1_score(train_label, train_prediction, average = "micro")
 		))
-	print("Test accuracy: {test_acc}".format(
-			test_acc = accuracy_score(test_label, test_prediction)
+	print("Train macro f1: {train_f1}".format(
+			train_f1 = f1_score(train_label, train_prediction, average = "macro")
+		))
+	print("Test micro f1: {test_f1}".format(
+			test_f1 = f1_score(test_label, test_prediction, average = "micro")
+		))
+	print("Test macro f1: {test_f1}".format(
+			test_f1 = f1_score(test_label, test_prediction, average = "macro")
 		))

@@ -10,12 +10,11 @@ import torch
 
 class Blog(Dataset):
 
-	def __init__(self, root, subset_size):
+	def __init__(self, node_path, edge_path, subset_size):
 			
-		self.root = root
 		self.subset_size = subset_size
 
-		node_file = open(os.path.join(root, "karate_nodes.txt"), "r")
+		node_file = open(node_path, "r")
 		nodes = []
 		for line in node_file:
 			nodes.append(int(line))
@@ -25,7 +24,7 @@ class Blog(Dataset):
 		self.graph = [[] for i in range(self.num_nodes + 1)]
 
 		# Build Graph
-		edge_file = open(os.path.join(root, "karate_edges.txt"), "r")
+		edge_file = open(edge_path, "r")
 		for line in edge_file:
 			u, v = list(map(int, line.split(",")))
 			self.graph[u].append(v)
