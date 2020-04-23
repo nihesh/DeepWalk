@@ -24,6 +24,7 @@ class SoftmaxTree(nn.Module):
         self.embed_size = embed_size
         self.size = 0 #global variable reserved for inorder_traversal
         self.matrix = None #embedding matrix depends on self.size
+        self.hashmap_for_vertices = {} #stores paths and binary multipliers
     def generate_codes(self, root, temp_list):
         if(root is None):
             return
@@ -39,6 +40,18 @@ class SoftmaxTree(nn.Module):
             self.generate_codes(root.right, temp_list)
             temp_list.pop()
         return 
+    def generate_hashmap(self, root):
+        if(root is None):
+            return
+        if(root.value is not None):
+            tree_path, binary_multipliers = self.get_path(root.value)
+            self.hashmap_for_vertices[root.value] = [np.array(tree_path), np.array(binary_multipliers)]
+            return
+        if(root.left is not None):
+            self.generate_hashmap(root.left)
+        if(root.right is not None):
+            self.generate_hashmap(root.right)
+        return
     def inorder_traversal(self, root):
         if(root is None):
             return
@@ -69,8 +82,9 @@ class SoftmaxTree(nn.Module):
         
         root = heappop(heap)
         self.root = root
-        self.generate_codes(self.root, [])
         self.inorder_traversal(self.root)
+        self.generate_codes(self.root, [])
+        
         self.matrix = nn.Embedding(self.size, self.embed_size)
         self.matrix.weight.data.copy_(torch.from_numpy(np.random.normal(loc = 0.25, scale = 0.01, size = (self.size, self.embed_size))))
     def create_complete_tree(self, vertex_list):
@@ -92,6 +106,20 @@ class SoftmaxTree(nn.Module):
         self.root = list_vertices[1]
         self.generate_codes(self.root, [])
         self.inorder_traversal(self.root)
+        self.generate_hashmap(self.root)
+        self.lookup_paths = nn.Embedding(len(self.hashmap_for_vertices), len(self.hashmap_for_vertices[0][0]))
+        self.lookup_binmultipliers = nn.Embedding(len(self.hashmap_for_vertices), len(self.hashmap_for_vertices[0][1]))
+        paths = []
+        binary_multipliers = []
+        for k,v in self.hashmap_for_vertices.items():
+            paths.append(v[0])
+            binary_multipliers.append(v[1])
+        paths = np.array(paths)
+        binary_multipliers = np.array(binary_multipliers)
+        self.lookup_paths.weight.data.copy_(torch.from_numpy(paths))
+        self.lookup_binmultipliers.weight.data.copy_(torch.from_numpy(binary_multipliers))
+        self.lookup_paths = self.lookup_paths.eval()
+        self.lookup_binmultipliers = self.lookup_binmultipliers.eval()
         self.matrix = nn.Embedding(self.size, self.embed_size)
         self.matrix.weight.data.copy_(torch.from_numpy(np.random.normal(loc = 0.25, scale = 0.15, size = (self.size, self.embed_size))))  
     
@@ -109,6 +137,7 @@ class SoftmaxTree(nn.Module):
                 root = root.right
                 mul.append(-1)
         return ret,mul
+    
     def forward(self, context_embedding, input_path_idxs, binary_multiplier):
         input_vectors = self.matrix(input_path_idxs)
         context_embedding = context_embedding.unsqueeze(-1)
