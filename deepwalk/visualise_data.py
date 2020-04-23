@@ -33,8 +33,8 @@ def read_graph(pkl_file):
     print(len(g[1]))
 ##mat_old = transform(mat_old)
 #mat_new = transform(mat_new)
-#draw(mat_old, "init_embeds.pdf")
-#draw(mat_new, "final_embeds.pdf")
-print(mat_new.shape)
-read_graph("./graph.pkl")
+draw(mat_old, "init_embeds.pdf")
+draw(mat_new, "final_embeds.pdf")
+#print(mat_new.shape)
+#read_graph("./graph.pkl")
     

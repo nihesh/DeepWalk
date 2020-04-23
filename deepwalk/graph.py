@@ -92,14 +92,3 @@ class Graph:
             next_node = self.adj[vertex_start][next_idx]
             vertex_start = next_node
         return ret
-from torch.utils.data import Dataset
-import h5py
-class WalkPairData(Dataset):
-    def __init__(self, hdf5_path):
-        super(WalkPairData, self).__init__()
-        self.hdf5_path = hdf5_path
-        self.f = h5py.File(self.hdf5_path, "r")
-    def __len__(self):
-        return len(self.f)
-    def __getitem__(self, idx):
-        return self.f[str(idx)].value
