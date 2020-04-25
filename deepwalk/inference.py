@@ -10,7 +10,7 @@ import pickle
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-
+from sklearn.metrics import f1_score
 def ReadData(root):
 
 	file = open(root, "rb")
@@ -64,4 +64,16 @@ if(__name__ == "__main__"):
 		))
 	print("Test accuracy: {test_acc}".format(
 			test_acc = accuracy_score(test_label, test_prediction)
+		))
+	print("Train macro: {train_acc}".format(
+			train_acc = f1_score(train_label, train_prediction, average = "macro")
+		))
+	print("Test macro: {test_acc}".format(
+			test_acc = f1_score(test_label, test_prediction, average = "macro")
+		))
+	print("Train micro: {train_acc}".format(
+			train_acc = f1_score(train_label, train_prediction, average = "micro")
+		))
+	print("Test micro: {test_acc}".format(
+			test_acc = f1_score(test_label, test_prediction, average = "micro")
 		))
