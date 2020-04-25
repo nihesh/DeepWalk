@@ -2,7 +2,7 @@
 # File   : inference.py
 # Date 	 : 23 March, 2020
 
-ROOT = "./embeddings.pkl"
+ROOT = "./embeddings_64.pkl"
 LABELS = "../data/group-edges.csv"
 SPLIT = 0.2							# Train : Test ratio
 
@@ -16,7 +16,7 @@ def ReadData(root):
 	file = open(root, "rb")
 	data = pickle.load(file)[0]
 	file.close()
-
+	print(data.shape)
 	return data
 
 def ReadLabels(root):
