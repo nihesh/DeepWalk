@@ -2,7 +2,7 @@
 # File   : inference.py
 # Date 	 : 23 March, 2020
 
-ROOT = "./embeddings_64.pkl"
+ROOT = "./embeddings_32.pkl"
 LABELS = "../data/group-edges.csv"
 SPLIT = 0.2							# Train : Test ratio
 
@@ -54,26 +54,20 @@ if(__name__ == "__main__"):
 	train_data = data[train]
 	test_data = data[test]
 
-	model = SVC(C = 1.0, kernel = "rbf")
+	model = SVC(C = 1.0, kernel = "linear")
 	model.fit(train_data, train_label)
 
 	train_prediction = model.predict(train_data)
 	test_prediction = model.predict(test_data)
-	print("Train accuracy: {train_acc}".format(
-			train_acc = accuracy_score(train_label, train_prediction)
-		))
-	print("Test accuracy: {test_acc}".format(
-			test_acc = accuracy_score(test_label, test_prediction)
-		))
 	print("Train macro: {train_acc}".format(
-			train_acc = f1_score(train_label, train_prediction, average = "macro")
+			train_acc = f1_score(train_label, train_prediction, average = "macro",labels=np.unique(train_prediction))
 		))
 	print("Test macro: {test_acc}".format(
-			test_acc = f1_score(test_label, test_prediction, average = "macro")
+			test_acc = f1_score(test_label, test_prediction, average = "macro",labels=np.unique(test_prediction))
 		))
 	print("Train micro: {train_acc}".format(
-			train_acc = f1_score(train_label, train_prediction, average = "micro")
+			train_acc = f1_score(train_label, train_prediction, average = "micro",labels=np.unique(train_prediction))
 		))
 	print("Test micro: {test_acc}".format(
-			test_acc = f1_score(test_label, test_prediction, average = "micro")
+			test_acc = f1_score(test_label, test_prediction, average = "micro",labels=np.unique(test_prediction))
 		))
