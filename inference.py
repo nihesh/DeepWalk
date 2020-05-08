@@ -32,7 +32,7 @@ def ReadData(root):
 	data = pickle.load(file)
 	file.close()
 
- 	return data
+	return data
 
 def ReadLabels(root):
 
@@ -79,22 +79,22 @@ if(__name__ == "__main__"):
 	test_data = data[test]
 
 	# model = OneVsRestClassifier(LogisticRegression(solver = "liblinear"))
-	# model = OneVsRestClassifier(SVC(C = 5, kernel = "linear"))
-	model = OneVsRestClassifier(DecisionTreeClassifier(min_impurity_decrease = 3e-4, random_state = 0))
+	model = OneVsRestClassifier(SVC(C = 5, kernel = "linear"))
+	# model = OneVsRestClassifier(DecisionTreeClassifier(min_impurity_decrease = 3e-4, random_state = 0))
 	model.fit(train_data, train_label)
 
 	train_prediction = model.predict(train_data)
 	test_prediction = model.predict(test_data)
 
 	print("Train micro f1: {train_f1}".format(
-			train_f1 = f1_score(train_label, train_prediction, average = "micro")
+			train_f1 = f1_score(train_label, train_prediction, average = "micro", labels = np.unique(train_prediction))
 		))
 	print("Train macro f1: {train_f1}".format(
-			train_f1 = f1_score(train_label, train_prediction, average = "macro")
+			train_f1 = f1_score(train_label, train_prediction, average = "macro", labels = np.unique(train_prediction))
 		))
 	print("Test micro f1: {test_f1}".format(
-			test_f1 = f1_score(test_label, test_prediction, average = "micro")
+			test_f1 = f1_score(test_label, test_prediction, average = "micro", labels = np.unique(test_prediction))
 		))
 	print("Test macro f1: {test_f1}".format(
-			test_f1 = f1_score(test_label, test_prediction, average = "macro")
+			test_f1 = f1_score(test_label, test_prediction, average = "macro", labels = np.unique(test_prediction))
 		))
