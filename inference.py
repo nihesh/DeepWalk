@@ -36,25 +36,18 @@ def ReadData(root):
 
 def ReadLabels(root):
 
-	"""
-	Returns all the labels for associated nodes 
-	"""
-
 	file = open(root, "r")
 	data = []
 
-	num_labels = -1
 	num_samples = 0
 	for line in file:
 		line = line.split(",")
 		num_samples = max(num_samples, int(line[0]))
-		num_labels = max(num_labels, int(line[1]))	
-
 		data.append(line)
 
-	labels = [np.zeros(num_labels) for i in range(num_samples)]
+	labels = [-1 for i in range(num_samples)]
 	for line in data:
-		labels[int(line[0]) - 1][int(line[1]) - 1] = 1
+		labels[int(line[0]) - 1] = int(line[1]) - 1
 
 	return np.asarray(labels)
 
@@ -72,29 +65,32 @@ if(__name__ == "__main__"):
 	train = idx[:int(num_samples * SPLIT)]
 	test = idx[int(num_samples * SPLIT):]
 
-	train_label = labels[train, :]
-	test_label = labels[test, :]
+	train_label = labels[train]
+	test_label = labels[test]
 
 	train_data = data[train]
 	test_data = data[test]
 
+	print(train_data.shape)
+	print(test_data.shape)
+	exit(0)
 	# model = OneVsRestClassifier(LogisticRegression(solver = "liblinear"))
-	model = OneVsRestClassifier(SVC(C = 5, kernel = "linear"))
+	model = SVC(C = 1, kernel = "linear")
 	# model = OneVsRestClassifier(DecisionTreeClassifier(min_impurity_decrease = 3e-4, random_state = 0))
 	model.fit(train_data, train_label)
 
 	train_prediction = model.predict(train_data)
 	test_prediction = model.predict(test_data)
 
-	print("Train micro f1: {train_f1}".format(
-			train_f1 = f1_score(train_label, train_prediction, average = "micro", labels = np.unique(train_prediction))
+	print("Train macro: {train_acc}".format(
+			train_acc = f1_score(train_label, train_prediction, average = "macro",labels=np.unique(train_prediction))
 		))
-	print("Train macro f1: {train_f1}".format(
-			train_f1 = f1_score(train_label, train_prediction, average = "macro", labels = np.unique(train_prediction))
+	print("Test macro: {test_acc}".format(
+			test_acc = f1_score(test_label, test_prediction, average = "macro",labels=np.unique(test_prediction))
 		))
-	print("Test micro f1: {test_f1}".format(
-			test_f1 = f1_score(test_label, test_prediction, average = "micro", labels = np.unique(test_prediction))
+	print("Train micro: {train_acc}".format(
+			train_acc = f1_score(train_label, train_prediction, average = "micro",labels=np.unique(train_prediction))
 		))
-	print("Test macro f1: {test_f1}".format(
-			test_f1 = f1_score(test_label, test_prediction, average = "macro", labels = np.unique(test_prediction))
+	print("Test micro: {test_acc}".format(
+			test_acc = f1_score(test_label, test_prediction, average = "micro",labels=np.unique(test_prediction))
 		))

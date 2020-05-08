@@ -4,13 +4,24 @@
 
 ROOT = "./embeddings_32.pkl"
 LABELS = "../data/group-edges.csv"
-SPLIT = 0.2							# Train : Test ratio
+SPLIT = 0.8							# Train : Test ratio
 
+import random
+import torch
 import pickle
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
+
+def ResetWorkspace():
+
+	random.seed(0)
+	np.random.seed(0)
+	torch.manual_seed(0)
+	torch.backends.cudnn.deterministic = True
+	torch.backends.cudnn.benchmark = False
+
 def ReadData(root):
 
 	file = open(root, "rb")
@@ -38,6 +49,8 @@ def ReadLabels(root):
 
 if(__name__ == "__main__"):
 
+	ResetWorkspace()
+
 	data = ReadData(ROOT)
 	labels = ReadLabels(LABELS)
 
@@ -53,6 +66,9 @@ if(__name__ == "__main__"):
 
 	train_data = data[train]
 	test_data = data[test]
+
+	print(train_data.shape)
+	print(test_data.shape)
 
 	model = SVC(C = 1.0, kernel = "linear")
 	model.fit(train_data, train_label)
