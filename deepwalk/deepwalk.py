@@ -11,9 +11,14 @@ import torch.optim as optim
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 Tensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
 Tensorf = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-
-
 import args
+global_lr = args.lr
+def adjust_lr(optimizer):
+    global global_lr
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = max(1e-4, lr - 0.001)
+        global_lr = param_group['lr']
+    #(global_lr)
 import pickle
 import sys
 import matplotlib.pyplot as plt
@@ -55,16 +60,15 @@ def deepwalk(tree,graph):
 
 from torch.utils.data import Dataset
 class WalkPairData(Dataset):
-    def __init__(self, num_vertices, gamma, graph, tree):
+    def __init__(self, num_vertices, graph, tree):
         super(WalkPairData, self).__init__()
         self.num_vertices = num_vertices
-        self.gamma = gamma
         self.graph = graph
         self.tree = tree
     def __len__(self):
-        return self.num_vertices * self.gamma 
+        return self.num_vertices
     def __getitem__(self, idx):
-        vertex_id = idx % self.num_vertices
+        vertex_id = idx
         random_walk = self.graph.random_walk(vertex_id, args.walk_length)
         ret = write_walk(random_walk, self.tree)
         return ret
@@ -87,33 +91,37 @@ if __name__ == "__main__":
     
     g.save_graph("./graph.pkl")
     #deepwalk(tree,g)
-    dataset = WalkPairData(g.num_nodes, args.walks_per_vertex, g, tree)
+    dataset = WalkPairData(g.num_nodes, g, tree)
     train_loader = DataLoader(dataset, batch_size = args.batch_size, num_workers = 1, shuffle = True)
     totalsize = len(train_loader)
     for e in range(1):
-        avg_loss = 0
-        count = 0
-        for idx,batch in (enumerate(train_loader)):
-            batch = Variable(batch.type(Tensor), requires_grad = False)
-            batch = batch.squeeze(0)
-            context_idx = batch[:,0]
-            input_idx = batch[:,1]
-            #print(batch.shape)
-            tree_path_idx = Variable(tree.lookup_paths(input_idx).type(Tensor), requires_grad = False)
-            binary_multipliers = Variable(tree.lookup_binmultipliers(input_idx).type(Tensorf), requires_grad = False)
-            #print(tree_path_idx.shape)
-            optimE.zero_grad()
-            context_vector = embeddings(context_idx)
-            prob = tree(context_vector, tree_path_idx,binary_multipliers)
-            loss = nll(prob)
-            print(idx, totalsize,loss)
-            loss.backward()
-            avg_loss += loss.item()
-            count += 1
-            #for name,p in embeddings.named_parameters():
-            #   print(p.grad)
-            optimE.step()
-        print(e, avg_loss/count)
+        for g in range(args.walks_per_vertex):
+            avg_loss = 0
+            count = 0
+            for idx,batch in (enumerate(train_loader)):
+                batch = Variable(batch.type(Tensor), requires_grad = False)
+                batch = batch.squeeze(0)
+                context_idx = batch[:,0]
+                input_idx = batch[:,1]
+                #print(batch.shape)
+                tree_path_idx = Variable(tree.lookup_paths(input_idx).type(Tensor), requires_grad = False)
+                binary_multipliers = Variable(tree.lookup_binmultipliers(input_idx).type(Tensorf), requires_grad = False)
+                #print(tree_path_idx.shape)
+                optimE.zero_grad()
+                context_vector = embeddings(context_idx)
+                prob = tree(context_vector, tree_path_idx,binary_multipliers)
+                loss = nll(prob)
+                print(idx, totalsize,loss)
+                print("-"*5, global_lr, "-"*5)
+                loss.backward()
+                avg_loss += loss.item()
+                count += 1
+                #for name,p in embeddings.named_parameters():
+                #   print(p.grad)
+                optimE.step()
+            print(e, avg_loss/count)
+            adjust_lr(optimE)
+
     embeddings = np.copy(list(embeddings.parameters())[0].data.cpu().numpy())
     f = open("embeddings.pkl", "wb")
     pickle.dump((embeddings,embeddings2), f)
