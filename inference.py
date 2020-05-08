@@ -4,7 +4,7 @@
 
 ROOT = "./dump/embedding.pkl"
 LABELS = "./data/group-edges.csv"
-SPLIT = 0.8							# Train : Test ratio
+SPLIT = 0.9							# Train : Test ratio
 
 import pickle
 import numpy as np
@@ -17,6 +17,20 @@ from sklearn.manifold import TSNE
 from sklearn.tree import DecisionTreeClassifier
 import random
 import torch
+
+"""
+Experimental setup
+Percentage		C value
+10				0.0006
+20				0.0006
+30				0.0006
+40				0.0006
+50				0.0006
+60				0.0006
+70				0.0001
+80				0.0001
+90				0.0001
+"""
 
 def ResetWorkspace():
 
@@ -71,12 +85,7 @@ if(__name__ == "__main__"):
 	train_data = data[train]
 	test_data = data[test]
 
-	print(train_data.shape)
-	print(test_data.shape)
-	exit(0)
-	# model = OneVsRestClassifier(LogisticRegression(solver = "liblinear"))
-	model = SVC(C = 1, kernel = "linear")
-	# model = OneVsRestClassifier(DecisionTreeClassifier(min_impurity_decrease = 3e-4, random_state = 0))
+	model = SVC(C = 0.0001, kernel = "linear")
 	model.fit(train_data, train_label)
 
 	train_prediction = model.predict(train_data)
