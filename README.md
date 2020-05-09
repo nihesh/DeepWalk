@@ -23,7 +23,7 @@ Dependencies
 Deep Walk Re-implementation
 ---------------------------
 
-The deepwalk re-implementation is included in the deepwalk folder.
+The deepwalk re-implementation is included in the `./deepwalk` directory.
 To train deepwalk algorithm on BlogCatalog dataset, use
 > `$ python3 train.py`
 
