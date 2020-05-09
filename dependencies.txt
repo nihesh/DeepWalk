@@ -1,0 +1,7 @@
+pytorch
+numpy
+matplotlib
+scikit-learn
+tqdm
+h5py
+pickle

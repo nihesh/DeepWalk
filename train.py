@@ -6,7 +6,7 @@ NODE_PATH = "./data/nodes.csv"
 EDGE_PATH = "./data/edges.csv"
 DUMP = "./dump/"
 WALK_LENGTH = 40
-EPOCHS = 80
+EPOCHS = 100
 BATCH_SIZE = 20
 EMBED_SIZE = 128
 SUBSAMPLE_SIZE = 1000			# 0 corresponds to the size of the dataset
@@ -20,12 +20,12 @@ Best Parameters
 walk length = 40
 epochs = 100
 batch_size = 20
-embed_size = 32
-subsample_size = 100
-learning_rate = 1e-2
-window_size = 10
+embed_size = 128
+subsample_size = 1000
+learning_rate = 1e-3
+window_size = 5
 seed = 0
-temperature = 2
+temperature = 1
 """
 
 import src.dataset as dataset
