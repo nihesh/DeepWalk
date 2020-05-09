@@ -32,7 +32,8 @@ The final embeddings are stored into `embeddings.pkl` in the same folder.
 To change any arguments associated with deepwalk training such as random walk length, modify values present in args.py
 
 > `$ python3 inference.py`
-to output f1 scores for the given embeddings file and train-test split ratio. The path to embeddings pkl file and the ratio need to be changed in `inference.py` before proceeding.
+
+To output f1 scores for the given embeddings file and train-test split ratio. The path to embeddings pkl file and the ratio need to be changed in `inference.py` before proceeding.
 
 Negative sampling implementation
 --------------------------------
