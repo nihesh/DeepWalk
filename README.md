@@ -26,6 +26,7 @@ Deep Walk Re-implementation
 The deepwalk re-implementation is included in the deepwalk folder.
 To train deepwalk algorithm on BlogCatalog dataset, use
 > `$ python3 train.py`
+
 Deepwalk can be trained on any other graph by passing its node list and edge connection files in the same format as BlogCatalog inside the main function.
 The final embeddings are stored into `embeddings.pkl` in the same folder.
 To change any arguments associated with deepwalk training such as random walk length, modify values present in args.py
