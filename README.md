@@ -6,7 +6,7 @@ This is the Python-3.6 re-implementation of the paper *DeepWalk: Online Learning
 Overview
 --------
 
-There are two different implementations within this repository. The deep walk re-implementation is located within deepwalk folder. Another implementation that uses negative sampling instead of hierarchical softmax is located in src. We run our experiments on the blog catalog dataset.
+There are two different implementations within this repository. The deep walk re-implementation is located within deepwalk folder. Another implementation that uses negative sampling instead of hierarchical softmax is located in src. We run our experiments on the BlogCatalog dataset.
 
 Dependencies
 ------------
@@ -24,10 +24,14 @@ Deep Walk Re-implementation
 ---------------------------
 
 The deepwalk re-implementation is included in the `./deepwalk` directory.
+
+> `$ cd deepwalk`
+
 To train deepwalk algorithm on BlogCatalog dataset, use
+
 > `$ python3 train.py`
 
-Deepwalk can be trained on any other graph by passing its node list and edge connection files in the same format as BlogCatalog inside the main function.
+Deepwalk can be trained on any other graph by passing its node list and edge connection files in the same format as BlogCatalog inside the main function. 
 The final embeddings are stored into `embeddings.pkl` in the same folder.
 To change any arguments associated with deepwalk training such as random walk length, modify values present in args.py
 
@@ -38,9 +42,11 @@ To output f1 scores for the given embeddings file and train-test split ratio. Th
 Negative sampling implementation
 --------------------------------
 
+The source files for this implementation are located in `./src` directory. 
+
 > `$ python3 train.py`
 
-By default, this command starts training on BlogCatalog dataset using the default parameters set in train.py. The generated embeddings are dumped into `./dump/embeddings.pkl`.
+By default, this script starts training on BlogCatalog dataset using the default parameters set in train.py. The generated embeddings are dumped into `./dump/embeddings.pkl`.
 
 > `$ python3 inference.py`
 
