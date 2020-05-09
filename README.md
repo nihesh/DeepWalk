@@ -23,7 +23,15 @@ Dependencies
 Deep Walk Re-implementation
 ---------------------------
 
-add details here
+The deepwalk re-implementation is included in the deepwalk folder.
+To train deepwalk algorithm on BlogCatalog dataset, use
+> `$ python3 train.py`
+Deepwalk can be trained on any other graph by passing its node list and edge connection files in the same format as BlogCatalog inside the main function.
+The final embeddings are stored into `embeddings.pkl` in the same folder.
+To change any arguments associated with deepwalk training such as random walk length, modify values present in args.py
+
+> `$ python3 inference.py`
+to output f1 scores for the given embeddings file and train-test split ratio. The path to embeddings pkl file and the ratio need to be changed in `inference.py` before proceeding.
 
 Negative sampling implementation
 --------------------------------
@@ -47,10 +55,10 @@ Results
 
 | Percentage of labelled nodes | 10% | 20% | 30% | 40% | 50% | 60% | 70% | 80% | 90% |
 | ---------------------------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Train Macro F1 			   | | | | | | | | | |  
-| Train Micro F1			   | | | | | | | | | | 
-| Test Macro F1				   | | | | | | | | | | 
-| Test Micro F1				   | | | | | | | | | | 	
+| Train Macro F1 			   |33.7 | 31.3	| 29.54 |	29.51 |	29.94| 28.22|	30.04|	27|	30.7|  
+| Train Micro F1			   |40|	38.7|	36.8|	37.12|	36.6|	35.43|	36.16|	34.83|	36| 
+| Test Macro F1				   |17.1|	20.11|	23.55|	23.71|	24.77|	26.68|	26.07|	28.09|	28.15| 
+| Test Micro F1				   |28.3|	29.8|	31.9|	31.83|	31.98|	34|	32.94|	35.72|	33.45| 	
 
 *Negative sampling results*
 
